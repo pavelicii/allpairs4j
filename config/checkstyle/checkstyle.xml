@@ -1,0 +1,236 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+        "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+        "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+    This is the custom Checkstyle configuration that incorporates best practises to make code more clean and readable.
+    Checks in this configuration are grouped and appear in alphabetical order.
+
+    Checkstyle is very configurable. Be sure to read the documentation at https://checkstyle.org.
+
+    Author: Pavel Nazimok - @pavelicii - https://github.com/pavelicii/checkstyle-config
+
+    Other notable Checkstyle configurations:
+    - Sun:    https://github.com/checkstyle/checkstyle/blob/master/src/main/resources/sun_checks.xml
+    - Google: https://github.com/checkstyle/checkstyle/blob/master/src/main/resources/google_checks.xml
+-->
+
+<!-- All files checks -->
+<!-- https://checkstyle.org/config.html#Checker -->
+<module name="Checker">
+    <property name="fileExtensions" value="java,properties"/>
+    <property name="severity" value="error"/>
+
+    <!-- Exclude files from being processed by Checkstyle -->
+    <!-- https://checkstyle.org/config_filefilters.html -->
+    <module name="BeforeExecutionExclusionFileFilter">
+        <property name="fileNamePattern" value="module\-info\.java$"/>
+    </module>
+
+    <!-- Enable ability to suppress Checkstyle rules with @SuppressWarnings -->
+    <!-- https://checkstyle.org/config_filters.html#SuppressWarningsFilter -->
+    <module name="SuppressWarningsFilter"/>
+
+    <!-- Miscellaneous checks -->
+    <!-- https://checkstyle.org/config_misc.html -->
+    <module name="NewlineAtEndOfFile"/>
+    <module name="UniqueProperties"/>
+
+    <!-- Regexp checks -->
+    <!-- https://checkstyle.org/config_regexp.html -->
+    <module name="RegexpMultiline">
+        <property name="format" value="^([ \t]{0,}@\w+[ \t]*(\(.*\))?)?[ \t]{0,}([a-z]+ )*(class|@?interface|enum)[^{]+\{[ \t]{0,}(?=\r?\n[ \t]{0,}(?!\})[^\s]|[^\r\n]*[^\s])"/>
+        <property name="message" value="Leave empty line after Class definition."/>
+    </module>
+    <module name="RegexpMultiline">
+        <property name="format" value="(static|\)|->|\{)[ \t\r\n]*\{[ \t]*\r?\n[ \t]*$"/>
+        <property name="message" value="Code block (except Class definition) has empty line at the start."/>
+    </module>
+    <module name="RegexpMultiline">
+        <property name="format" value="(?&lt;!\{\s{0,120}$)^$(?=^\s{0,120}\})"/>
+        <property name="message" value="Code block has empty line at the end."/>
+    </module>
+    <module name="RegexpSingleline">
+        <property name="format" value="\s+$"/>
+        <property name="message" value="Line has trailing spaces."/>
+    </module>
+
+    <!-- Size Violations checks -->
+    <!-- https://checkstyle.org/config_sizes.html -->
+    <module name="LineLength">
+        <property name="fileExtensions" value="java"/>
+        <property name="max" value="120"/>
+    </module>
+
+    <!-- Whitespace checks -->
+    <!-- https://checkstyle.org/config_whitespace.html -->
+    <module name="FileTabCharacter"/>
+
+    <!-- Individual Java source files checks -->
+    <!-- https://checkstyle.sourceforge.io/config.html#TreeWalker -->
+    <module name="TreeWalker">
+        <!-- Code Block checks -->
+        <!-- https://checkstyle.org/config_blocks.html -->
+        <module name="AvoidNestedBlocks">
+            <property name="allowInSwitchCase" value="true"/>
+        </module>
+        <module name="EmptyBlock"/>
+        <module name="LeftCurly">
+            <property name="ignoreEnums" value="false"/>
+        </module>
+        <module name="NeedBraces"/>
+        <module name="RightCurly"/>
+
+        <!-- Class Design checks -->
+        <!-- https://checkstyle.org/config_design.html -->
+        <module name="FinalClass"/>
+        <module name="HideUtilityClassConstructor"/>
+        <module name="InterfaceIsType"/>
+        <module name="MutableException"/>
+        <module name="OneTopLevelClass"/>
+        <module name="VisibilityModifier">
+            <property name="ignoreAnnotationCanonicalNames" value="org.junit.jupiter.api.io.TempDir"/>
+        </module>
+
+        <!-- Coding checks -->
+        <!-- https://checkstyle.org/config_coding.html -->
+        <module name="AvoidDoubleBraceInitialization"/>
+        <module name="CovariantEquals"/>
+        <module name="DeclarationOrder"/>
+        <module name="DefaultComesLast"/>
+        <module name="EmptyStatement"/>
+        <module name="EqualsAvoidNull"/>
+        <module name="EqualsHashCode"/>
+        <module name="FallThrough"/>
+        <module name="FinalLocalVariable"/>
+        <module name="HiddenField">
+            <property name="tokens" value="VARIABLE_DEF"/>
+            <property name="ignoreSetter" value="true"/>
+            <property name="ignoreConstructorParameter" value="true"/>
+        </module>
+        <module name="IllegalToken"/>
+        <module name="InnerAssignment"/>
+        <module name="MissingSwitchDefault"/>
+        <module name="MultipleStringLiterals">
+            <property name="allowedDuplicates" value="5"/>
+        </module>
+        <module name="MultipleVariableDeclarations"/>
+        <module name="NoArrayTrailingComma"/>
+        <module name="NoEnumTrailingComma"/>
+        <module name="OneStatementPerLine"/>
+        <module name="OverloadMethodsDeclarationOrder"/>
+        <module name="PackageDeclaration"/>
+        <module name="ParameterAssignment"/>
+        <module name="SimplifyBooleanExpression"/>
+        <module name="SimplifyBooleanReturn"/>
+        <module name="StringLiteralEquality"/>
+        <module name="UnnecessaryParentheses"/>
+        <module name="UnnecessarySemicolonAfterOuterTypeDeclaration"/>
+        <module name="UnnecessarySemicolonAfterTypeMemberDeclaration"/>
+        <module name="UnnecessarySemicolonInEnumeration"/>
+        <module name="UnnecessarySemicolonInTryWithResources"/>
+        <module name="UnusedLocalVariable"/>
+
+        <!-- Imports checks -->
+        <!-- https://checkstyle.org/config_imports.html -->
+        <module name="AvoidStarImport"/>
+        <module name="AvoidStaticImport">
+            <property name="excludes" value="
+                    org.junit.jupiter.api.Assertions.*,
+                    org.assertj.core.api.Assertions.*,
+            "/>
+        </module>
+        <module name="IllegalImport"/>
+        <module name="RedundantImport"/>
+        <module name="UnusedImports">
+            <property name="processJavadoc" value="false"/>
+        </module>
+
+        <!-- Javadoc Comments checks -->
+        <!-- https://checkstyle.org/config_javadoc.html -->
+        <module name="AtclauseOrder"/>
+        <module name="InvalidJavadocPosition"/>
+        <module name="JavadocBlockTagLocation"/>
+        <module name="JavadocContentLocation"/>
+        <module name="JavadocMethod"/>
+        <module name="JavadocMissingLeadingAsterisk"/>
+        <module name="JavadocMissingWhitespaceAfterAsterisk"/>
+        <module name="JavadocStyle"/>
+        <module name="JavadocTagContinuationIndentation"/>
+        <module name="JavadocType"/>
+        <module name="NonEmptyAtclauseDescription"/>
+        <module name="RequireEmptyLineBeforeBlockTagGroup"/>
+        <module name="SingleLineJavadoc"/>
+
+        <!-- Miscellaneous checks -->
+        <!-- https://checkstyle.org/config_misc.html -->
+        <module name="ArrayTypeStyle"/>
+        <module name="NoCodeInFile"/>
+        <module name="OuterTypeFilename"/>
+        <module name="ParameterAssignment"/>
+        <module name="UpperEll"/>
+
+        <!-- Modifiers checks -->
+        <!-- https://checkstyle.org/config_modifier.html -->
+        <module name="ModifierOrder"/>
+        <module name="RedundantModifier"/>
+
+        <!-- Naming Conventions checks -->
+        <!-- https://checkstyle.org/config_naming.html -->
+        <module name="AbbreviationAsWordInName">
+            <property name="allowedAbbreviationLength" value="0"/>
+            <property name="ignoreFinal" value="false"/>
+        </module>
+        <module name="ClassTypeParameterName"/>
+        <module name="ConstantName"/>
+        <module name="InterfaceTypeParameterName"/>
+        <module name="LambdaParameterName"/>
+        <module name="LocalFinalVariableName"/>
+        <module name="LocalVariableName"/>
+        <module name="MemberName"/>
+        <module name="MethodName"/>
+        <module name="MethodTypeParameterName"/>
+        <module name="PackageName"/>
+        <module name="ParameterName"/>
+        <module name="StaticVariableName"/>
+        <module name="TypeName"/>
+
+        <!-- Size Violations checks -->
+        <!-- https://checkstyle.org/config_sizes.html -->
+        <module name="ParameterNumber">
+            <property name="max" value="5"/>
+            <property name="ignoreOverriddenMethods" value="true"/>
+        </module>
+
+        <!-- Whitespace checks -->
+        <!-- https://checkstyle.org/config_whitespace.html -->
+        <module name="EmptyForIteratorPad"/>
+        <module name="EmptyLineSeparator">
+            <property name="allowNoEmptyLineBetweenFields" value="true"/>
+            <property name="allowMultipleEmptyLines" value="false"/>
+            <property name="allowMultipleEmptyLinesInsideClassMembers" value="false"/>
+        </module>
+        <module name="GenericWhitespace"/>
+        <module name="MethodParamPad"/>
+        <module name="NoWhitespaceAfter"/>
+        <module name="NoWhitespaceBefore"/>
+        <module name="NoWhitespaceBeforeCaseDefaultColon"/>
+        <module name="OperatorWrap"/>
+        <module name="ParenPad"/>
+        <module name="SingleSpaceSeparator"/>
+        <module name="TypecastParenPad"/>
+        <module name="WhitespaceAfter"/>
+        <module name="WhitespaceAround">
+            <property name="allowEmptyTypes" value="true"/>
+            <property name="allowEmptyLambdas" value="true"/>
+        </module>
+
+        <!-- Enable ability to suppress Checkstyle rules with comments -->
+        <!-- https://checkstyle.org/config_filters.html#SuppressionCommentFilter -->
+        <module name="SuppressionCommentFilter"/>
+        <!-- This module is required by SuppressWarningsFilter specified in Checker -->
+        <!-- https://checkstyle.org/config_filters.html#SuppressWarningsFilter -->
+        <module name="SuppressWarningsHolder"/>
+    </module>
+</module>

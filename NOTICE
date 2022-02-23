@@ -1,0 +1,27 @@
+AllPairs4J
+Copyright 2022 Pavel Nazimok - @pavelicii
+
+This product is derived from the work by MetaCommunications Inc.
+It can be obtained at:
+
+  * LICENSE:
+    * https://sourceforge.net/p/allpairs/code/4/tree/LICENSE.txt (MIT License)
+  * HOMEPAGE:
+    * https://sourceforge.net/projects/allpairs/
+
+This product is derived from the work by Tsuyoshi Hombashi.
+It can be obtained at:
+
+  * LICENSE:
+    * https://github.com/thombashi/allpairspy/blob/master/LICENSE.txt (MIT License)
+  * HOMEPAGE:
+    * https://github.com/thombashi/allpairspy
+
+This product contains a modified portion of 'itertools_java', an open source Java library for
+efficient generation and iteration over various combinatorial constructs, written by Samagra Sharma.
+It can be obtained at:
+
+  * LICENSE:
+    * https://github.com/samagra14/itertools_java/blob/master/LICENSE.md (MIT License)
+  * HOMEPAGE:
+    * https://github.com/samagra14/itertools_java
