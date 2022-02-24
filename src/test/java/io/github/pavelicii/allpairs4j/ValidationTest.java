@@ -110,7 +110,7 @@ class ValidationTest {
                 () -> new AllPairs.AllPairsBuilder()
                         .withParameter(null)
                         .build()
-        );
+        ).withStackTraceContaining("requireNonNull");
     }
 
     @Test
@@ -119,7 +119,7 @@ class ValidationTest {
                 () -> new AllPairs.AllPairsBuilder()
                         .withParameters(null)
                         .build()
-        );
+        ).withStackTraceContaining("requireNonNull");
     }
 
     @Test
@@ -129,7 +129,7 @@ class ValidationTest {
                         .withParameters(TestData.PARAMETERS)
                         .withConstraint(null)
                         .build()
-        );
+        ).withStackTraceContaining("requireNonNull");
     }
 
     @Test
@@ -139,6 +139,6 @@ class ValidationTest {
                         .withParameters(TestData.PARAMETERS)
                         .withConstraints(null)
                         .build()
-        );
+        ).withStackTraceContaining("requireNonNull");
     }
 }

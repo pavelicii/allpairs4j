@@ -66,33 +66,9 @@ dependencies {
 
 ## Usage
 
-### Configure
-
-You can configure AllPairs generation using `AllPairsBuilder`. After it is built, the test cases are generated.
-
-#### Sample code:
-
-```java
-AllPairs allPairs = new AllPairs.AllPairsBuilder()
-        .withParameters( List<Parameter> ) // required
-        .withConstraint( Predicate<Case> ) // not required
-        .withTestCombinationSize( int )    // not required, default is 2
-        .printEachCaseDuringGeneration()   // not required, useful for debug
-        .build();
-
-List<Case> generatedCases = allPairs.getGeneratedCases();
-```
-
-#### Data types:
-
-* **Parameter**: Named `List<Object>` storing all input values.
-* **Case**: `Map<String, Object>` storing one generated test case,
-  where `key` is mapped to the `Parameter` name, `value` is mapped to one of the `Parameter` values.
-* **Predicate\<Case\>**: constraint to test against `Case`. When evaluates to `true`, the `Case` is considered invalid 
-  and is filtered out form the resulting set.
-
 ### Generate Pairwise Combinations
 
+You can configure AllPairs generation using `AllPairsBuilder`. After it is built, the test cases are generated.\
 As a minimal setup, you need to describe Parameters to generate test combinations from.
 
 #### Sample code:
@@ -257,6 +233,31 @@ System.out.println(allPairs.toString());
 ```
 
 </details>
+
+### Configuration summary
+
+#### Sample code:
+
+```java
+AllPairs allPairs = new AllPairs.AllPairsBuilder()
+        .withParameters( List<Parameter> )        // required
+        .withParameter( Parameter )               // alternative way to specify Parameters one by one
+        .withConstraints( List<Predicate<Case>> ) // not required, default is no Constraints
+        .withConstraint( Predicate<Case> )        // alternative way to specify Constraints one by one
+        .withTestCombinationSize( int )           // not required, default is 2
+        .printEachCaseDuringGeneration()          // not required, useful for debug
+        .build();
+
+List<Case> generatedCases = allPairs.getGeneratedCases();
+```
+
+#### Data types:
+
+* **Parameter**: Named `List<Object>` storing all input values.
+* **Case**: `Map<String, Object>` storing one generated test case,
+  where `key` is mapped to the `Parameter` name, `value` is mapped to one of the `Parameter` values.
+* **Predicate\<Case\>**: constraint to test against `Case`. When evaluates to `true`, the `Case` is considered invalid
+  and is filtered out form the resulting set.
 
 ## Contributing
 
