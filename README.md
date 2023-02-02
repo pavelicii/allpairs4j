@@ -1,6 +1,6 @@
 # AllPairs4J
 
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/pavelicii/allpairs4j/build-checkstyle?logo=GitHub)](https://github.com/pavelicii/allpairs4j/actions/workflows/build-checkstyle.yaml)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/pavelicii/allpairs4j/build-checkstyle.yaml?branch=master&logo=GitHub)](https://github.com/pavelicii/allpairs4j/actions/workflows/build-checkstyle.yaml)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.pavelicii/allpairs4j)](https://search.maven.org/artifact/io.github.pavelicii/allpairs4j)
 
 AllPairs4J is an open source Java library for generation of minimal set of test combinations. 
