@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Pavel Nazimok - @pavelicii
+ * Copyright 2023 Pavel Nazimok - @pavelicii
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ class CombinationStorage {
 
     CombinationStorage(int n) {
         this.n = n;
-        nodes = new LinkedHashMap<>();
-        itemIdCombinations = Stream.generate(() -> new HashSet<List<String>>())
+        this.nodes = new LinkedHashMap<>();
+        this.itemIdCombinations = Stream.generate(() -> new HashSet<List<String>>())
                 .limit(n)
                 .collect(Collectors.toList());
     }
@@ -43,15 +43,15 @@ class CombinationStorage {
     }
 
     int getLength() {
-        return itemIdCombinations.get(itemIdCombinations.size() - 1).size();
+        return this.itemIdCombinations.get(this.itemIdCombinations.size() - 1).size();
     }
 
     Node getNodeOrCreateNew(Item item) {
-        return nodes.getOrDefault(item.getItemId(), new Node(item.getItemId()));
+        return this.nodes.getOrDefault(item.getItemId(), new Node(item.getItemId()));
     }
 
     void addSequenceCombinations(List<Item> sequence) {
-        for (int i = 1; i < n + 1; i++) {
+        for (int i = 1; i < this.n + 1; i++) {
             Itertools.combinations(sequence, i).forEach(this::addCombination);
         }
     }
@@ -63,12 +63,12 @@ class CombinationStorage {
             throw new RuntimeException("Combination is empty");
         }
 
-        itemIdCombinations
+        this.itemIdCombinations
                 .get(combinationSize - 1)
                 .add(combination.stream().map(Item::getItemId).collect(Collectors.toList()));
 
-        if (combinationSize == 1 && !nodes.containsKey(combination.get(0).getItemId())) {
-            nodes.put(combination.get(0).getItemId(), new Node(combination.get(0).getItemId()));
+        if (combinationSize == 1 && !this.nodes.containsKey(combination.get(0).getItemId())) {
+            this.nodes.put(combination.get(0).getItemId(), new Node(combination.get(0).getItemId()));
             return;
         }
 
@@ -77,7 +77,7 @@ class CombinationStorage {
                 .collect(Collectors.toList());
 
         for (int i = 0; i < itemIds.size(); i++) {
-            final Node currentNode = nodes.get(itemIds.get(i));
+            final Node currentNode = this.nodes.get(itemIds.get(i));
             currentNode.increaseCounter();
             currentNode.addInboundItemIds(itemIds.subList(0, i));
             currentNode.addOutboundItemIds(itemIds.subList(i + 1, itemIds.size()));

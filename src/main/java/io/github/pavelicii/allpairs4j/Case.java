@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Pavel Nazimok - @pavelicii
+ * Copyright 2023 Pavel Nazimok - @pavelicii
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import java.util.Map;
 /**
  * A {@link LinkedHashMap} representing single test case.
  * <ul>
- *     <li>key is the {@link Parameter} name
- *     <li>value is one of the {@link Parameter} values selected by AllPairs algorithm
+ *     <li>{@code key} is the {@link Parameter} name
+ *     <li>{@code value} is one of the {@link Parameter} values selected by AllPairs algorithm
  * </ul>
  */
 public class Case extends LinkedHashMap<String, Object> {
@@ -38,7 +38,7 @@ public class Case extends LinkedHashMap<String, Object> {
     }
 
     /**
-     * Create {@code Case}.
+     * Creates {@link Case}.
      *
      * @param input varargs. Must be an odd number of arguments. Each odd argument is a key of {@link String} type.
      *              Each even argument is a value of {@link Object} type.

@@ -3,34 +3,29 @@
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/pavelicii/allpairs4j/build-checkstyle.yaml?branch=master&logo=GitHub)](https://github.com/pavelicii/allpairs4j/actions/workflows/build-checkstyle.yaml)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.pavelicii/allpairs4j)](https://search.maven.org/artifact/io.github.pavelicii/allpairs4j)
 
-AllPairs4J is an open source Java library for generation of minimal set of test combinations. 
+AllPairs4J is an open source Java library for generation of minimal set of test combinations.
 
-AllPairs4J is a Java port of [allpairspy](https://github.com/thombashi/allpairspy) project
-(with some [improvements and bugfixes](https://github.com/thombashi/allpairspy/pull/10))
-developed by MetaCommunications Engineering and Tsuyoshi Hombashi.
+## Pairwise Testing • [pairwise.org](https://www.pairwise.org/)
 
-## Pairwise Testing
-
-In computer science, _all-pairs testing_ or _pairwise testing_ is a combinatorial method of software testing that, for 
-each pair of input parameters to a system, tests all possible discrete combinations of those parameters. For example, 
-if you want to create a test suite for browser testing, the domain can be described by the following parameters:
+Assuming you want to create test cases for web browser testing, the domain can be described by the following parameters:
 
 ```text
 Browser:    Chrome, Firefox, Safari, Edge
 OS:         Windows, Linux, macOS
 RAM:        1024, 2048, 4096, 8192, 16384
 Drive:      HDD, SSD
+Screen:     1024x768, 1366x768, 1680x1050, 1920x1080, 2560x1440, 3840x2160
 ```
 
-There are hundreds of possible combinations of these values. Instead of spending unreasonable amount of time testing
-them all, pairwise suggests testing all possible pairs of values. For example, `{Chrome, Windows}` is one pair, 
-`{4096, SSD}` is another; together they represent a test case that covers many pairs: `{Chrome, Windows, 4096, SSD}`. 
-In the end, you have good coverage while the number of test cases remains manageable.
+There are hundreds of possible combinations of these values. However, usually most faults are caused by interactions 
+of at most two factors, therefore testing all pairs is an effective alternative to exhaustive testing. 
+For example, `{Chrome, Windows}` is one pair, `{4096, SSD}` is another; together they can represent a test case 
+that also covers many other pairs: `{Chrome, Windows, 4096, SSD, 2560x1440}`. In the end, you have good 
+coverage while the number of test cases remains manageable.
 
-With AllPairs4J, you are also able to add limitations on the domain to restrict generation of certain pairs. 
-For example, specify that `Safari` can only be paired with `macOS`, and `Edge` can only be paired with `Windows`.
-
-For more info on pairwise testing see https://www.pairwise.org/.
+With AllPairs4J, you are also able to add **constraints** - limitations on the domain to restrict generation of certain 
+pairs. For example, specify that `Safari` can only be paired with `macOS`, and `Edge` can only be paired with `Windows`.
+Or you can go beyond pairs.
 
 ## Features
 
@@ -50,7 +45,7 @@ Java 8 or higher.
 
 ```groovy
 dependencies {
-    implementation 'io.github.pavelicii:allpairs4j:1.0.0'
+    implementation("io.github.pavelicii:allpairs4j:1.0.1")
 }
 ```
 
@@ -60,7 +55,7 @@ dependencies {
 <dependency>
     <groupId>io.github.pavelicii</groupId>
     <artifactId>allpairs4j</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
@@ -109,10 +104,11 @@ System.out.println(allPairs);
 
 </details>
 
-### Generate Filtered Pairwise Combinations
+### Constraints: Generate Filtered Pairwise Combinations
 
-To limit generated pairs, you need to describe Constraints. Each Constraint is a Predicate that is tested against 
-each generated Case. If it evaluates to `true`, the Case is deleted from the result.
+To filter out unwanted combinations, you need to describe Constraints. Each potential test Case is tested against them. 
+If any test evaluates to `true`, the Case under test won't be present in the result and the algorithm will search 
+for another Case, so that in the end all possible pairs are covered (considering all the Constraints).
 
 For example, let's create limitations so that: 
 * `Browser=Safari` can only be paired with `OS=macOS`
@@ -132,10 +128,7 @@ AllPairs allPairs = new AllPairs.AllPairsBuilder()
         .withConstraint(c -> (int) c.get("RAM") < 4000)
         .build();
 
-int index = 1;
-for (Case c : allPairs) {
-    System.out.printf("%3d: %s%n", index++, c);
-}
+System.out.println(allPairs);
 ```
 
 #### Output:
@@ -158,6 +151,31 @@ for (Case c : allPairs) {
 
 </details>
 
+#### Constraints tips:
+
+Try to simplify constraints as much as possible. Too complicated constraints might cause longer algorithm processing 
+time, especially on a large input of Parameters. 
+
+For example, for the following input:
+
+```
+Browser:    Chrome
+OS:         Linux, macOS
+Drive:      HDD, SSD
+```
+
+Consider two different constraints:
+
+```java
+// filter out 'Chrome-Linux-HDD' combination:
+complicatedConstraint = c -> c.get("Browser").equals("Chrome") && c.get("OS").equals("Linux") && c.get("Drive").equals("HDD")
+// filter out 'Linux-HDD' pair:
+simplifiedConstraint = c -> c.get("OS").equals("Linux") && c.get("Drive").equals("HDD")
+```
+
+It is better to use `simplifiedConstraint`, because the usage of `complicatedConstraint` implies there might be pairs 
+including non-`Chrome` browsers, while in fact there is only one possible browser.
+
 ### Generate Triplewise Combinations
 
 You can specify test combination size to go beyond pairs.
@@ -174,7 +192,7 @@ AllPairs allPairs = new AllPairs.AllPairsBuilder()
                 new Parameter("Drive", "HDD", "SSD")))
         .build();
 
-System.out.println(allPairs.toString());
+System.out.println(allPairs);
 ```
 
 #### Output:
@@ -234,30 +252,30 @@ System.out.println(allPairs.toString());
 
 </details>
 
-### Configuration summary
+### Configuration Summary
 
-#### Sample code:
+#### Builder:
 
 ```java
 AllPairs allPairs = new AllPairs.AllPairsBuilder()
-        .withParameters( List<Parameter> )        // required
-        .withParameter( Parameter )               // alternative way to specify Parameters one by one
-        .withConstraints( List<Predicate<Case>> ) // not required, default is no Constraints
-        .withConstraint( Predicate<Case> )        // alternative way to specify Constraints one by one
-        .withTestCombinationSize( int )           // not required, default is 2
-        .printEachCaseDuringGeneration()          // not required, useful for debug
+        .withParameter( Parameter )                            // specifies 1 Parameter
+        .withParameters( List<Parameter> )                     // alternative way to specify multiple Parameters as List
+        .withConstraint( Predicate<ConstrainableCase> )        // specifies 1 Constraint, default is no Constraints
+        .withConstraints( List<Predicate<ConstrainableCase>> ) // alternative way to specify multiple Constraints as List
+        .withTestCombinationSize( int )                        // specifies test combination size, default is 2 (pair)
+        .printEachCaseDuringGeneration()                       // prints Cases during generation, useful for debug
         .build();
 
-List<Case> generatedCases = allPairs.getGeneratedCases();
+List<Case> generatedCases = allPairs.getGeneratedCases();      // work with resulting List of Cases
+for (Case c : allPairs) { ... }                                // or use Iterator
 ```
 
 #### Data types:
 
-* **Parameter**: Named `List<Object>` storing all input values.
+* **Parameter**: named `List<Object>` storing all input values
 * **Case**: `Map<String, Object>` storing one generated test case,
-  where `key` is mapped to the `Parameter` name, `value` is mapped to one of the `Parameter` values.
-* **Predicate\<Case\>**: constraint to test against `Case`. When evaluates to `true`, the `Case` is considered invalid
-  and is filtered out form the resulting set.
+  where `key` is mapped to the `Parameter` name, `value` is mapped to one of the `Parameter` values
+* **Predicate\<ConstrainableCase\>**: constraint
 
 ## Contributing
 
@@ -266,4 +284,4 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 Please make sure to update tests as appropriate.
 
 [SemVer](https://semver.org/) is used for versioning. For the versions available, 
-see the [releases on this repository](https://github.com/pavelicii/allpairs4j/releases).
+see the [releases](https://github.com/pavelicii/allpairs4j/releases) on this repository.

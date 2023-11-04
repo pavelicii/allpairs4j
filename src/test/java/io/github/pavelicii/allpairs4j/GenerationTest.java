@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Pavel Nazimok - @pavelicii
+ * Copyright 2023 Pavel Nazimok - @pavelicii
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,10 @@
 package io.github.pavelicii.allpairs4j;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,7 +33,7 @@ class GenerationTest {
                 .build();
 
         assertThat(allPairs.getGeneratedCases()).containsExactlyElementsOf(TestData.EXPECTED_PAIRWISE_CASES);
-        assertAllCombinationsAreGenerated(allPairs);
+        assertAllTestCombinationsAreGenerated(allPairs);
     }
 
     @Test
@@ -48,7 +46,7 @@ class GenerationTest {
                 .build();
 
         assertThat(allPairs.getGeneratedCases()).containsExactlyElementsOf(TestData.EXPECTED_FILTERED_PAIRWISE_CASES);
-        assertAllCombinationsAreGenerated(allPairs);
+        assertAllTestCombinationsAreGenerated(allPairs);
     }
 
     @Test
@@ -58,8 +56,8 @@ class GenerationTest {
                 .withTestCombinationSize(3)
                 .build();
 
-        assertThat(allPairs.getGeneratedCases().size()).isEqualTo(48);
-        assertAllCombinationsAreGenerated(allPairs);
+        assertThat(allPairs.getGeneratedCases()).containsExactlyElementsOf(TestData.EXPECTED_TRIPLEWISE_CASES);
+        assertAllTestCombinationsAreGenerated(allPairs);
     }
 
     @Test
@@ -68,16 +66,17 @@ class GenerationTest {
                 .withParameters(TestData.PARAMETERS)
                 .withConstraints(Arrays.asList(
                         c -> c.get("Browser").equals("Safari") && !c.get("OS").equals("macOS"),
-                        c -> c.get("Browser").equals("Edge") && !c.get("OS").equals("Windows")))
+                        c -> c.get("Browser").equals("Edge") && !c.get("OS").equals("Windows"),
+                        c -> c.get("OS").equals("Linux") && c.get("Drive").equals("SSD") && (int) c.get("RAM") < 8000))
                 .withTestCombinationSize(3)
                 .build();
 
-        assertThat(allPairs.getGeneratedCases().size()).isEqualTo(32);
-        assertAllCombinationsAreGenerated(allPairs);
+        assertThat(allPairs.getGeneratedCases()).containsExactlyElementsOf(TestData.EXPECTED_FILTERED_TRIPLEWISE_CASES);
+        assertAllTestCombinationsAreGenerated(allPairs);
     }
 
     @Test
-    void shouldGenerateZeroCasesWithParameterExcludingConstraints() {
+    void shouldGenerateZeroCasesWithConstraintsExcludingAllSingleParameterValues() {
         final AllPairs allPairs = new AllPairs.AllPairsBuilder()
                 .withParameters(TestData.PARAMETERS)
                 .withConstraint(c -> c.get("Drive").equals("HDD"))
@@ -92,11 +91,11 @@ class GenerationTest {
         final AllPairs allPairs = new AllPairs.AllPairsBuilder()
                 .withParameters(TestData.PARAMETERS)
                 .withConstraint(c -> c.get("Non-existent Parameter #1").equals("Foo"))
-                .withConstraint(c -> c.get("Non-existent Parameter #2").equals("Bar"))
+                .withConstraint(c -> (int) c.get("Non-existent Parameter #2") < 3)
                 .build();
 
         assertThat(allPairs.getGeneratedCases()).containsExactlyElementsOf(TestData.EXPECTED_PAIRWISE_CASES);
-        assertAllCombinationsAreGenerated(allPairs);
+        assertAllTestCombinationsAreGenerated(allPairs);
     }
 
     @Test
@@ -107,43 +106,40 @@ class GenerationTest {
                 .build();
 
         assertThat(allPairs.getGeneratedCases()).containsExactlyElementsOf(TestData.EXPECTED_PAIRWISE_CASES);
-        assertAllCombinationsAreGenerated(allPairs);
+        assertAllTestCombinationsAreGenerated(allPairs);
     }
 
-    private void assertAllCombinationsAreGenerated(AllPairs allPairs) {
-        final int n = allPairs.getTestCombinationSize();
+    @Test
+    @Timeout(value = 10)
+    void shouldGenerateAllPairwiseCasesForLargeInputWithoutConstraintsAndNotExceedTimeout() {
+        final AllPairs allPairs = new AllPairs.AllPairsBuilder()
+                .withParameters(TestData.PARAMETERS_LARGE)
+                .build();
 
-        final List<List<Case>> parametersAsCases = allPairs.getParameters().stream()
-                .map(parameter -> parameter.stream()
-                        .map(value -> new Case(parameter.getName(), value))
-                        .collect(Collectors.toList()))
-                .collect(Collectors.toList());
-        final List<List<Case>> cases = allPairs.getGeneratedCases().stream()
-                .map(c -> c.entrySet().stream()
-                        .map(entry -> new Case(entry.getKey(), entry.getValue()))
-                        .collect(Collectors.toList()))
-                .collect(Collectors.toList());
+        assertAllTestCombinationsAreGenerated(allPairs);
+    }
 
-        final List<Case> expectedCombinations = StreamSupport
-                .stream(Itertools.combinations(parametersAsCases, n).spliterator(), false)
-                .flatMap(itemsComb -> StreamSupport.stream(Itertools.product(itemsComb).spliterator(), false))
-                .map(cs -> cs.stream()
-                        .reduce(new Case(), (accumulator, c) -> {
-                            accumulator.putAll(c);
-                            return accumulator;
-                        }))
-                .filter(allPairs::isValidCase)
-                .collect(Collectors.toList());
-        final List<Case> actualCombinations = cases.stream()
-                .flatMap(c -> StreamSupport.stream(Itertools.combinations(c, n).spliterator(), false))
-                .distinct()
-                .map(cs -> cs.stream()
-                        .reduce(new Case(), (accumulator, c) -> {
-                            accumulator.putAll(c);
-                            return accumulator;
-                        }))
-                .collect(Collectors.toList());
+    @Test
+    @Timeout(value = 10)
+    void shouldGenerateAllPairwiseCasesForLargeInputWithConstraintsAndNotExceedTimeout() {
+        final AllPairs allPairs = new AllPairs.AllPairsBuilder()
+                .withParameters(TestData.PARAMETERS_LARGE)
+                .withConstraint(c -> c.get("1").equals("1-1") && c.get("2").equals("2-1"))
+                .withConstraint(c -> c.get("3").equals("3-1") && c.get("4").equals("4-1"))
+                .withConstraint(c -> c.get("2").equals("2-1") && c.get("3").equals("3-1") && c.get("20").equals("20-1"))
+                .build();
 
-        assertThat(actualCombinations).containsExactlyInAnyOrderElementsOf(expectedCombinations);
+        assertAllTestCombinationsAreGenerated(allPairs);
+    }
+
+    /**
+     * Asserts all {@code n}-wise test combinations are generated.
+     *
+     * @param allPairs {@link AllPairs} instance
+     */
+    private void assertAllTestCombinationsAreGenerated(AllPairs allPairs) {
+        assertThat(allPairs.getGeneratedUniqueTestCombinations())
+                .as(allPairs.getTestCombinationSize() + "-wise test combinations")
+                .containsExactlyInAnyOrderElementsOf(allPairs.getExpectedUniqueTestCombinations());
     }
 }

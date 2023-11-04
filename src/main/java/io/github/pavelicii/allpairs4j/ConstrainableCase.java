@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Pavel Nazimok - @pavelicii
+ * Copyright 2023 Pavel Nazimok - @pavelicii
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,40 +16,43 @@
 
 package io.github.pavelicii.allpairs4j;
 
-/**
- * Class for constraint definition.
- * Provides limited interface to {@link Case} to be used when defining constraints.
- */
+import java.util.List;
+
+/** Class for constraint definition. Imitates limited interface to {@link Case}. */
 public class ConstrainableCase {
 
     // Defined as a constant to cause as little performance penalty as possible
     private static final NoSuchParameterNameException NO_SUCH_PARAMETER_NAME_EXCEPTION =
             new NoSuchParameterNameException();
 
-    /** {@link Case} to test constraint against. Can be incomplete. */
-    private final Case aCase;
+    /** {@link Item}s {@link List} representing possible {@link Case} to test constraint against. Can be incomplete. */
+    private final List<Item> items;
 
-    ConstrainableCase(Case aCase) {
-        this.aCase = new Case(aCase);
+    ConstrainableCase(List<Item> items) {
+        this.items = items;
     }
 
     /**
-     * Get {@code Case} value mapped to {@code Parameter} name.
+     * Gets {@link Case} value mapped to {@link Parameter} name. Designed to use only for defining a constraint.
      * <p>
-     * If {@link Case} contains no mapping to the {@code Parameter} name, throws {@link NoSuchParameterNameException}.
+     * For detailed constraint description and usage see {@code AllPairs.AllPairsBuilder#withConstraint(Predicate)}.
+     * <p>--<p>
+     * Implementation details:
+     * If {@link Case} contains no mapping to the {@link Parameter} name, throws {@code NoSuchParameterNameException}.
      * When used to define constraint, the Exception is handled internally in {@code AllPairs#isValidCase(List)}.
-     * This could happen when {@code Case} is incomplete or when a user specified non-existent {@code Parameter} name.
+     * This could happen when {@link Case} is incomplete or when a user specified non-existent {@code Parameter} name.
      * The Exception is used as control flow to allow constraints to be defined as {@code Predicate}.
      *
      * @param parameterName {@link Parameter} name mapped to the value to return
-     * @return value mapped to the {@code Parameter name}
+     * @return value mapped to the {@link Parameter name}
      * @see AllPairs.AllPairsBuilder#withConstraint(java.util.function.Predicate)
      */
     public Object get(String parameterName) {
-        if (!aCase.containsKey(parameterName)) {
-            throw NO_SUCH_PARAMETER_NAME_EXCEPTION;
-        }
-        return aCase.get(parameterName);
+        return this.items.stream()
+                .filter(item -> item.getName().equals(parameterName))
+                .findAny()
+                .orElseThrow(() -> NO_SUCH_PARAMETER_NAME_EXCEPTION)
+                .getValue();
     }
 
     /**
