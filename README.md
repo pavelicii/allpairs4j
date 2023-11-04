@@ -7,7 +7,7 @@ AllPairs4J is an open source Java library for generation of minimal set of test 
 
 ## Pairwise Testing • [pairwise.org](https://www.pairwise.org/)
 
-Assuming you want to create test cases for web browser testing, the domain can be described by the following parameters:
+Assuming you want to create test cases for web browser testing, the domain can be described with parameters:
 
 ```text
 Browser:    Chrome, Firefox, Safari, Edge
@@ -23,9 +23,9 @@ For example, `{Chrome, Windows}` is one pair, `{4096, SSD}` is another; together
 that also covers many other pairs: `{Chrome, Windows, 4096, SSD, 2560x1440}`. In the end, you have good 
 coverage while the number of test cases remains manageable.
 
-With AllPairs4J, you are also able to add **constraints** - limitations on the domain to restrict generation of certain 
-pairs. For example, specify that `Safari` can only be paired with `macOS`, and `Edge` can only be paired with `Windows`.
-Or you can go beyond pairs.
+With AllPairs4J, you can add **constraints** - limitations on the domain to restrict generation of certain pairs. 
+For example, specify that `Safari` can only be paired with `macOS`, and `Edge` with `Windows`. 
+Or even go beyond pairs.
 
 ## Features
 
