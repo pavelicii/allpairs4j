@@ -21,7 +21,7 @@ java {
 }
 
 checkstyle {
-    toolVersion = "10.12.4"
+    toolVersion = "9.3" // Latest version compatible with Java 8
     sourceSets = listOf() // Don't check anything with Checkstyle during 'check' task
 }
 tasks.register("checkstyle", Checkstyle::class) {
