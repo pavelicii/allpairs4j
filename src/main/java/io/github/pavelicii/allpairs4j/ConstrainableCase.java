@@ -38,7 +38,7 @@ public class ConstrainableCase {
      * For detailed constraint description and usage see {@code AllPairs.AllPairsBuilder#withConstraint(Predicate)}.
      * <p>--<p>
      * Implementation details:
-     * If {@link Case} contains no mapping to the {@link Parameter} name, throws {@link NoSuchParameterNameException}.
+     * If {@link Case} contains no mapping to the {@link Parameter} name, throws {@code NoSuchParameterNameException}.
      * When used to define constraint, the Exception is handled internally in {@code AllPairs#isValidCase(List)}.
      * This could happen when {@link Case} is incomplete or when a user specified non-existent {@code Parameter} name.
      * The Exception is used as control flow to allow constraints to be defined as {@code Predicate}.
