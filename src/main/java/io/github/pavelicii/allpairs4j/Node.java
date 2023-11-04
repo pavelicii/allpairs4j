@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Pavel Nazimok - @pavelicii
+ * Copyright 2023 Pavel Nazimok - @pavelicii
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,32 +29,37 @@ class Node {
 
     Node(String nodeId) {
         this.nodeId = nodeId;
-        counter = 0;
-        inboundItemIds = new HashSet<>();
-        outboundItemIds = new HashSet<>();
+        this.counter = 0;
+        this.inboundItemIds = new HashSet<>();
+        this.outboundItemIds = new HashSet<>();
+    }
+
+    @Override
+    public String toString() {
+        return this.nodeId;
     }
 
     void increaseCounter() {
-        counter++;
+        this.counter++;
     }
 
     int getCounter() {
-        return counter;
+        return this.counter;
     }
 
     int getInboundItemIdsSize() {
-        return inboundItemIds.size();
+        return this.inboundItemIds.size();
     }
 
     int getOutboundItemIdsSize() {
-        return outboundItemIds.size();
+        return this.outboundItemIds.size();
     }
 
     void addInboundItemIds(Collection<String> itemIds) {
-        inboundItemIds.addAll(itemIds);
+        this.inboundItemIds.addAll(itemIds);
     }
 
     void addOutboundItemIds(Collection<String> itemIds) {
-        outboundItemIds.addAll(itemIds);
+        this.outboundItemIds.addAll(itemIds);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Pavel Nazimok - @pavelicii
+ * Copyright 2023 Pavel Nazimok - @pavelicii
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,12 @@ package io.github.pavelicii.allpairs4j;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,7 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 /**
- * Main class containing AllPairs algorithm and providing generated test combinations.
+ * Main class containing AllPairs algorithm and providing generated test {@link Case}s.
  * Must be instantiated using {@link AllPairsBuilder}.
  */
 public final class AllPairs implements Iterable<Case> {
@@ -41,22 +44,25 @@ public final class AllPairs implements Iterable<Case> {
     private final boolean printEachCaseDuringGeneration;
 
     private final CombinationStorage combinationStorage;
-    private final int maxUniqueCombinationsExpected;
+    /** Expected unique {@code n}-wise test combinations (considering constraints). */
+    private final List<Map<String, Object>> expectedUniqueTestCombinations;
+    /** Generated unique {@code n}-wise test combinations. */
+    private List<Map<String, Object>> generatedUniqueTestCombinations;
     private final List<List<Item>> itemMatrix;
 
     private final List<Case> generatedCases;
 
     private AllPairs(AllPairsBuilder allPairsBuilder) {
-        parameters = allPairsBuilder.parameters;
-        constraints = allPairsBuilder.constraints;
-        n = allPairsBuilder.n;
-        printEachCaseDuringGeneration = allPairsBuilder.printEachCaseDuringGeneration;
+        this.parameters = allPairsBuilder.parameters;
+        this.constraints = allPairsBuilder.constraints;
+        this.n = allPairsBuilder.n;
+        this.printEachCaseDuringGeneration = allPairsBuilder.printEachCaseDuringGeneration;
 
-        combinationStorage = new CombinationStorage(n);
-        itemMatrix = createItemMatrix(parameters);
-        maxUniqueCombinationsExpected = calculateMaxUniqueCombinations(itemMatrix, n);
+        this.combinationStorage = new CombinationStorage(this.n);
+        this.itemMatrix = createItemMatrix(this.parameters);
+        this.expectedUniqueTestCombinations = findExpectedUniqueTestCombinations();
 
-        generatedCases = generateCases();
+        this.generatedCases = generateCases();
     }
 
     /**
@@ -74,35 +80,42 @@ public final class AllPairs implements Iterable<Case> {
         private boolean printEachCaseDuringGeneration;
 
         public AllPairsBuilder() {
-            parameters = new ArrayList<>();
-            constraints = new ArrayList<>();
-            n = 2;
-            printEachCaseDuringGeneration = false;
+            this.parameters = new ArrayList<>();
+            this.constraints = new ArrayList<>();
+            this.n = 2;
+            this.printEachCaseDuringGeneration = false;
         }
 
         /**
-         * Adds one {@code Parameter} to be processed by AllPairs algorithm.
+         * Adds one {@link Parameter}.
          * <ul>
-         *     <li>Must provide at least two {@code Parameter}s
-         *     <li>Each {@code Parameter} must have at least one value
-         *     <li>Each {@code Parameter} must have no duplicate values
-         *     <li>{@code Parameter} {@code name} must be unique
+         *     <li>Must provide at least two {@link Parameter}s
+         *     <li>Each {@link Parameter} must have at least one value
+         *     <li>Each {@link Parameter} must have no duplicate values
+         *     <li>{@link Parameter} {@code name} must be unique
          * </ul>
+         * <strong>Examples:</strong>
+         * <pre>{@code
+         *     new Parameter("OS", "Windows", "Linux", "macOS")
+         *     new Parameter("RAM", 2048, 4096, 8192, 16384)
+         * }</pre>
          *
          * @param parameter {@link Parameter}
-         * @return a reference to {@code AllPairsBuilder} object
+         * @return a reference to {@link AllPairsBuilder} object
          */
         public AllPairsBuilder withParameter(Parameter parameter) {
             Objects.requireNonNull(parameter, "Parameter must be non-null");
-            parameters.add(parameter);
+            this.parameters.add(parameter);
             return this;
         }
 
         /**
-         * Adds {@code List} of {@code Parameter}s to be processed by AllPairs algorithm.
+         * Adds {@link List} of {@link Parameter}s.
+         * <p>
+         * For detailed description see {@link AllPairsBuilder#withParameter(Parameter)}.
          *
-         * @param parameters {@code List} of {@link Parameter}s
-         * @return a reference to {@code AllPairsBuilder} object
+         * @param parameters {@link List} of {@link Parameter}s
+         * @return a reference to {@link AllPairsBuilder} object
          * @see AllPairsBuilder#withParameter(Parameter)
          */
         public AllPairsBuilder withParameters(List<Parameter> parameters) {
@@ -112,39 +125,59 @@ public final class AllPairs implements Iterable<Case> {
         }
 
         /**
-         * Adds one {@link Case} constraint to be processed by AllPairs algorithm.
-         * Provided {@link Predicate} is tested against each {@code Case} generated by AllPairs algorithm.
-         * If it evaluates to {@code true}, the {@code Case} under test won't be present in the result.
-         * <p>
-         * If now specified, all possible test combinations will be generated.
-         * <p>
-         * Constraint examples:
+         * Adds one test {@link Case} constraint as {@link Predicate}. Each potential test {@link Case} is tested
+         * against it. If test evaluates to {@code true}, the {@link Case} under test won't be present in the result
+         * and the algorithm will search for another {@link Case}, so that in the end all possible {@code n}-wise test
+         * combinations are covered (considering all constraints).
+         * <ul>
+         *     <li> If not specified, all possible test combinations will be generated
+         *     <li> If non-existing {@link Parameter} name is provided, it will always evaluate to {@code false}
+         * </ul>
+         * <strong>Examples:</strong>
          * <pre>{@code
          *     // Cases with "Foo" and "Bar" pair won't be generated:
          *     c -> c.get("paramName1").equals("Foo") && c.get("paramName2").equals("Bar")
          *     // Cases with "paramName"'s value greater than 5 won't be generated:
          *     c -> c.get("paramName") > 5
          * }</pre>
-         * If non-existent {@link Parameter} name is provided, it will always evaluate to {@code false}.
+         * <p>
+         * <strong>Recommended usage:</strong>
+         * <p>
+         * Try to simplify constraints as much as possible. Too complicated constraints might cause longer algorithm
+         * processing time, especially on a large input of {@link Parameter}s. For example, consider two different
+         * constraints for the following input:
+         * <pre>{@code
+         *     Browser: "Chrome"
+         *     OS:      "Linux", "macOS"
+         *     Drive:   "HDD", "SSD"
          *
-         * @param constraint {@code Predicate} to be tested against all possible {@code Case}s
-         * @return a reference to {@code AllPairsBuilder} object
+         *     // complicatedConstraint (filter out 'Chrome-Linux-HDD' combination):
+         *     c -> c.get("Browser").equals("Chrome") && c.get("OS").equals("Linux") && c.get("Drive").equals("HDD")
+         *     // simplifiedConstraint (filter out 'Linux-HDD' pair):
+         *     c -> c.get("OS").equals("Linux") && c.get("Drive").equals("HDD")
+         * }</pre>
+         * It is better to use {@code simplifiedConstraint}, because the usage of {@code complicatedConstraint}
+         * implies there might be pairs including non-{@code 'Chrome'} browsers, while in fact there is only one
+         * possible browser.
+         *
+         * @param constraint {@link Predicate}{@code <ConstrainableCase>} to filter out unwanted {@link Case}s
+         * @return a reference to {@link AllPairsBuilder} object
          * @see ConstrainableCase
          * @see AllPairsBuilder#withParameter(Parameter)
          */
         public AllPairsBuilder withConstraint(Predicate<ConstrainableCase> constraint) {
             Objects.requireNonNull(constraint, "Constraint must be non-null");
-            constraints.add(constraint);
+            this.constraints.add(constraint);
             return this;
         }
 
         /**
-         * Adds {@code List} of {@link Case} constraints to be processed by AllPairs algorithm.
+         * Adds {@link List} of {@link Case} constraints to filter {@code n}-wise test combinations.
          * <p>
-         * If now specified, all possible test combinations will be generated.
+         * For detailed description see {@link AllPairsBuilder#withConstraint(Predicate)}.
          *
-         * @param constraints {@code List} of {@code Predicate}s to be tested against all possible {@code Case}s
-         * @return a reference to {@code AllPairsBuilder} object
+         * @param constraints {@link List} of {@link Predicate}s to filter out unwanted {@link Case}s
+         * @return a reference to {@link AllPairsBuilder} object
          * @see AllPairsBuilder#withConstraint(Predicate)
          */
         public AllPairsBuilder withConstraints(List<Predicate<ConstrainableCase>> constraints) {
@@ -154,16 +187,15 @@ public final class AllPairs implements Iterable<Case> {
         }
 
         /**
-         * Specifies test combination length to be processed by AllPairs algorithm. 2 - pairwise, 3 - triplewise, etc.
-         * <p>
-         * If not specified, the default value 2 will be used.
+         * Specifies test combination length. 2 - pairwise, 3 - triplewise, etc.
          * <ul>
          *     <li>Must be greater than or equal to 2
          *     <li>Must be less than or equal to the number of {@link Parameter}s
+         *     <li>If not specified, the default value 2 will be used
          * </ul>
          *
          * @param n length of n-wise test combination
-         * @return a reference to {@code AllPairsBuilder} object
+         * @return a reference to {@link AllPairsBuilder} object
          * @see AllPairsBuilder#withParameter(Parameter)
          */
         public AllPairsBuilder withTestCombinationSize(int n) {
@@ -177,17 +209,17 @@ public final class AllPairs implements Iterable<Case> {
          * <p>
          * If not specified, printing will be disabled.
          *
-         * @return a reference to {@code AllPairsBuilder} object
+         * @return a reference to {@link AllPairsBuilder} object
          */
         public AllPairsBuilder printEachCaseDuringGeneration() {
-            printEachCaseDuringGeneration = true;
+            this.printEachCaseDuringGeneration = true;
             return this;
         }
 
         /**
-         * Using provided configuration, build a new instance of {@link AllPairs} with generated test combinations.
+         * Using provided configuration, builds a new instance of {@link AllPairs} with generated test {@link Case}s.
          *
-         * @return {@code AllPairs} instance
+         * @return {@link AllPairs} instance
          */
         public AllPairs build() {
             validate();
@@ -195,18 +227,18 @@ public final class AllPairs implements Iterable<Case> {
         }
 
         private void validate() {
-            if (n < 2) {
-                throw new IllegalArgumentException("Minimum test combination size is 2. Provided: " + n);
+            if (this.n < 2) {
+                throw new IllegalArgumentException("Minimum test combination size is 2. Provided: " + this.n);
             }
 
-            if (parameters.size() < n) {
+            if (this.parameters.size() < this.n) {
                 throw new IllegalArgumentException(String.format(
                         "The number of Parameters (%d) must be greater than ot equal to the test combination size (%d)",
-                        parameters.size(), n
+                        this.parameters.size(), this.n
                 ));
             }
 
-            parameters.forEach(parameter -> {
+            this.parameters.forEach(parameter -> {
                 if (parameter.isEmpty()) {
                     throw new IllegalArgumentException("Each Parameter must have at least one value. "
                             + "Provided Parameter with no values: " + parameter.getName());
@@ -216,7 +248,7 @@ public final class AllPairs implements Iterable<Case> {
                     throw new IllegalArgumentException("Parameter name must be non-null. Provided: " + parameter);
                 }
 
-                if (parameter.getName().equals("")) {
+                if (parameter.getName().isEmpty()) {
                     throw new IllegalArgumentException("Parameter name must not be empty. Provided: " + parameter);
                 }
 
@@ -228,7 +260,7 @@ public final class AllPairs implements Iterable<Case> {
             });
 
             final Set<String> nonUniqueParameterNamesFiller = new HashSet<>();
-            final Set<String> nonUniqueParameterNames = parameters.stream()
+            final Set<String> nonUniqueParameterNames = this.parameters.stream()
                     .map(Parameter::getName)
                     .filter(name -> !nonUniqueParameterNamesFiller.add(name))
                     .collect(Collectors.toSet());
@@ -241,31 +273,59 @@ public final class AllPairs implements Iterable<Case> {
     }
 
     public List<Parameter> getParameters() {
-        return parameters;
+        return this.parameters;
     }
 
     public int getTestCombinationSize() {
-        return n;
+        return this.n;
     }
 
     public List<Predicate<ConstrainableCase>> getConstraints() {
-        return constraints;
+        return this.constraints;
     }
 
+    /**
+     * Returns generated test {@link Case}s.
+     *
+     * @return {@link List} of {@link Case}s
+     */
     public List<Case> getGeneratedCases() {
-        return generatedCases;
+        return this.generatedCases;
+    }
+
+    /**
+     * Returns expected unique {@code n}-wise tests combinations (considering constraints).
+     *
+     * @return {@link List} of {@link Map}s of {@code n}-wise test combinations, where key and value corresponds to
+     *     a {@link Parameter}'s name and one of its values respectively
+     */
+    List<Map<String, Object>> getExpectedUniqueTestCombinations() {
+        return this.expectedUniqueTestCombinations;
+    }
+
+    /**
+     * Returns generated unique {@code n}-wise tests combinations.
+     *
+     * @return {@link List} of {@link Map}s of {@code n}-wise test combinations, where key and value corresponds to
+     *     a {@link Parameter}'s name and one of its values respectively
+     */
+    List<Map<String, Object>> getGeneratedUniqueTestCombinations() {
+        if (this.generatedUniqueTestCombinations == null) {
+            this.generatedUniqueTestCombinations = findGeneratedUniqueTestCombinations();
+        }
+        return this.generatedUniqueTestCombinations;
     }
 
     @Override
     public Iterator<Case> iterator() {
-        return generatedCases.iterator();
+        return this.generatedCases.iterator();
     }
 
     @Override
     public String toString() {
-        if (generatedCases != null) {
+        if (this.generatedCases != null) {
             final AtomicInteger index = new AtomicInteger(1);
-            return generatedCases.stream()
+            return this.generatedCases.stream()
                     .map(c -> String.format("%3d: %s", index.getAndIncrement(), c.toString()))
                     .collect(Collectors.joining(System.lineSeparator()));
         } else {
@@ -282,7 +342,7 @@ public final class AllPairs implements Iterable<Case> {
             if (nextCase == null) {
                 break;
             }
-            if (printEachCaseDuringGeneration) {
+            if (this.printEachCaseDuringGeneration) {
                 System.out.printf("%3d: %s%n", ++caseCount, nextCase);
             }
             cases.add(nextCase);
@@ -292,23 +352,23 @@ public final class AllPairs implements Iterable<Case> {
     }
 
     /**
-     * Generates next {@code Case} using AllPairs algorithm.
+     * Generates next test {@link Case} using AllPairs algorithm.
      *
-     * @return {@link Case} or {@code null} if all {@code Case}s are already found
+     * @return {@link Case} or {@code null} if all {@link Case}s are already found
      */
     private Case generateNextCase() {
-        if (combinationStorage.getLength() > maxUniqueCombinationsExpected) {
-            throw new RuntimeException("Actual number of combinations exceeded possible maximum");
+        if (this.combinationStorage.getLength() > this.expectedUniqueTestCombinations.size()) {
+            throw new RuntimeException("Actual number of test combinations exceeded possible maximum");
         }
 
-        if (combinationStorage.getLength() == maxUniqueCombinationsExpected) {
-            return null; // All combinations are found
+        if (this.combinationStorage.getLength() == this.expectedUniqueTestCombinations.size()) {
+            return null; // All test combinations are found
         }
 
-        final int previousUniqueCombinationsCount = combinationStorage.getLength();
+        final int previousUniqueTestCombinationsCount = this.combinationStorage.getLength();
         final List<Item> chosenItems = new ArrayList<>();
         final List<Integer> itemIndexes = new ArrayList<>();
-        for (int i = 0; i < itemMatrix.size(); i++) {
+        for (int i = 0; i < this.itemMatrix.size(); i++) {
             chosenItems.add(null);
             itemIndexes.add(null);
         }
@@ -316,25 +376,25 @@ public final class AllPairs implements Iterable<Case> {
         int direction = 1;
         int i = 0; // Item group index
 
-        while (i > -1 && i < itemMatrix.size()) {
+        while (i > -1 && i < this.itemMatrix.size()) {
             if (direction == 1) {
                 updateWeightsAndReSortItemMatrix(chosenItems.subList(0, i), i);
                 itemIndexes.set(i, 0);
             } else {
                 itemIndexes.set(i, itemIndexes.get(i) + 1);
-                if (itemIndexes.get(i) >= itemMatrix.get(i).size()) {
+                if (itemIndexes.get(i) >= this.itemMatrix.get(i).size()) {
                     direction = -1;
                     if (i == 0) {
-                        return null; // Can't find more new combinations after all values brute force
+                        return null; // Can't find more new test combinations after all values brute force
                     }
                     i += direction;
                     continue;
                 }
             }
 
-            chosenItems.set(i, itemMatrix.get(i).get(itemIndexes.get(i)));
+            chosenItems.set(i, this.itemMatrix.get(i).get(itemIndexes.get(i)));
 
-            if (constraints == null || constraints.isEmpty() || isValidCase(chosenItems.subList(0, i + 1))) {
+            if (this.constraints == null || this.constraints.isEmpty() || isValidCase(chosenItems.subList(0, i + 1))) {
                 direction = 1;
             } else {
                 direction = 0;
@@ -342,10 +402,10 @@ public final class AllPairs implements Iterable<Case> {
 
             i += direction;
 
-            if (i == itemMatrix.size()) {
-                combinationStorage.addSequenceCombinations(chosenItems);
-                // Chosen items didn't produce new combinations
-                if (combinationStorage.getLength() == previousUniqueCombinationsCount) {
+            if (i == this.itemMatrix.size()) {
+                this.combinationStorage.addSequenceCombinations(chosenItems);
+                // Chosen items didn't produce new test combinations
+                if (this.combinationStorage.getLength() == previousUniqueTestCombinationsCount) {
                     direction = -1;
                     i += direction;
                 }
@@ -356,11 +416,11 @@ public final class AllPairs implements Iterable<Case> {
     }
 
     private void updateWeightsAndReSortItemMatrix(List<Item> chosenItems, int itemGroupIndex) {
-        for (Item item : itemMatrix.get(itemGroupIndex)) {
-            final Node node = combinationStorage.getNodeOrCreateNew(item);
+        for (Item item : this.itemMatrix.get(itemGroupIndex)) {
+            final Node node = this.combinationStorage.getNodeOrCreateNew(item);
 
             final List<Set<List<String>>> newItemIdCombinations = new ArrayList<>();
-            for (int i = 0; i < n; i++) {
+            for (int i = 0; i < this.n; i++) {
                 final List<Item> items = new ArrayList<>(chosenItems);
                 items.add(item);
 
@@ -370,15 +430,15 @@ public final class AllPairs implements Iterable<Case> {
                                 .map(Item::getItemId)
                                 .collect(Collectors.toList()))
                         .collect(Collectors.toSet());
-                newItemIdCombination.removeAll(combinationStorage.getItemIdCombinations().get(i));
+                newItemIdCombination.removeAll(this.combinationStorage.getItemIdCombinations().get(i));
 
                 newItemIdCombinations.add(newItemIdCombination);
             }
 
             final List<Integer> weights = new ArrayList<>();
-            // Node that creates most new combinations is the best
+            // Node that creates most new test combinations is the best
             weights.add(-newItemIdCombinations.get(newItemIdCombinations.size() - 1).size());
-            // Less used outbound connections are most likely to produce more combinations
+            // Less used outbound connections are most likely to produce more test combinations
             weights.add(node.getOutboundItemIdsSize());
             if (newItemIdCombinations.size() >= 2) {
                 for (int i = newItemIdCombinations.size() - 2; i >= 0; i--) {
@@ -391,7 +451,7 @@ public final class AllPairs implements Iterable<Case> {
             item.setWeights(weights);
         }
 
-        Collections.sort(itemMatrix.get(itemGroupIndex));
+        Collections.sort(this.itemMatrix.get(itemGroupIndex));
     }
 
     private List<List<Item>> createItemMatrix(List<Parameter> parameters) {
@@ -409,28 +469,19 @@ public final class AllPairs implements Iterable<Case> {
         return matrix;
     }
 
-    private int calculateMaxUniqueCombinations(List<List<Item>> itemMatrix, int n) {
-        final List<List<Item>> allPossibleCombinations = StreamSupport
-                .stream(Itertools.combinations(itemMatrix, n).spliterator(), false)
-                .flatMap(itemsComb -> StreamSupport.stream(Itertools.product(itemsComb).spliterator(), false))
-                .filter(this::isValidCase)
-                .collect(Collectors.toList());
-        return allPossibleCombinations.size();
-    }
-
     /**
      * Tests all constraints.
      *
-     * @param aCase {@link Case} to test all constraints against
-     * @return {@code false} if met at least one constraint, {@code true} if no constraints met
+     * @param items {@link Item}s {@link List} representing possible {@link Case} to test constraint against
+     * @return {@code false} if met at least one constraint, {@code true} if met no constraints
      */
-    boolean isValidCase(Case aCase) {
-        if (constraints.isEmpty()) {
+    private boolean isValidCase(List<Item> items) {
+        if (this.constraints.isEmpty()) {
             return true;
         }
 
-        final ConstrainableCase constrainableCase = new ConstrainableCase(aCase);
-        for (Predicate<ConstrainableCase> constraint : constraints) {
+        final ConstrainableCase constrainableCase = new ConstrainableCase(items);
+        for (Predicate<ConstrainableCase> constraint : this.constraints) {
             try {
                 if (constraint.test(constrainableCase)) {
                     return false;
@@ -444,7 +495,35 @@ public final class AllPairs implements Iterable<Case> {
         return true;
     }
 
-    private boolean isValidCase(List<Item> items) {
-        return isValidCase(new Case(items));
+    private List<Map<String, Object>> findExpectedUniqueTestCombinations() {
+        return StreamSupport
+                .stream(Itertools.combinations(this.itemMatrix, this.n).spliterator(), false)
+                .flatMap(itemsComb -> StreamSupport.stream(Itertools.product(itemsComb).spliterator(), false))
+                .filter(this::isValidCase)
+                .map(items -> items.stream().collect(Collectors.toMap(
+                        Item::getName,
+                        Item::getValue,
+                        (key1, key2) -> key1,
+                        LinkedHashMap::new)))
+                .collect(Collectors.toList());
+    }
+
+    private List<Map<String, Object>> findGeneratedUniqueTestCombinations() {
+        return this.generatedCases.stream()
+                .map(aCase -> aCase.entrySet().stream()
+                        .map(entry -> {
+                            final Map<String, Object> parameter = new HashMap<>();
+                            parameter.put(entry.getKey(), entry.getValue());
+                            return parameter;
+                        }).collect(Collectors.toList()))
+                .flatMap(caseAsMapPerValue ->
+                        StreamSupport.stream(Itertools.combinations(caseAsMapPerValue, this.n).spliterator(), false))
+                .distinct()
+                .map(testCombinationAsMapPerValue -> testCombinationAsMapPerValue.stream()
+                        .reduce(new LinkedHashMap<>(), (testCombination, value) -> {
+                            testCombination.putAll(value);
+                            return testCombination;
+                        }))
+                .collect(Collectors.toList());
     }
 }

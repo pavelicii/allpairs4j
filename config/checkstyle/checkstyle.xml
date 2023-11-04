@@ -23,24 +23,24 @@
     <property name="severity" value="error"/>
 
     <!-- Exclude files from being processed by Checkstyle -->
-    <!-- https://checkstyle.org/config_filefilters.html -->
+    <!-- https://checkstyle.sourceforge.io/filefilters/ -->
     <module name="BeforeExecutionExclusionFileFilter">
         <property name="fileNamePattern" value="module\-info\.java$"/>
     </module>
 
     <!-- Enable ability to suppress Checkstyle rules with @SuppressWarnings -->
-    <!-- https://checkstyle.org/config_filters.html#SuppressWarningsFilter -->
+    <!-- https://checkstyle.sourceforge.io/filters/suppresswarningsfilter.html -->
     <module name="SuppressWarningsFilter"/>
 
     <!-- Miscellaneous checks -->
-    <!-- https://checkstyle.org/config_misc.html -->
+    <!-- https://checkstyle.sourceforge.io/checks/misc/ -->
     <module name="NewlineAtEndOfFile"/>
     <module name="UniqueProperties"/>
 
     <!-- Regexp checks -->
-    <!-- https://checkstyle.org/config_regexp.html -->
+    <!-- https://checkstyle.sourceforge.io/checks/regexp/ -->
     <module name="RegexpMultiline">
-        <property name="format" value="^([ \t]{0,}@\w+[ \t]*(\(.*\))?)?[ \t]{0,}([a-z]+ )*(class|@?interface|enum)[^{]+\{[ \t]{0,}(?=\r?\n[ \t]{0,}(?!\})[^\s]|[^\r\n]*[^\s])"/>
+        <property name="format" value="^([ \t]{0,}@\w+[ \t]*(\(.*\))?)?[ \t]{0,}([a-z]+ )*(class|@?interface|enum)[^{]+\{[ \t]{0,}(?=\r?\n[ \t]{0,}(?!\})[^\s]|[^\r\n]*[^\s\}])"/>
         <property name="message" value="Leave empty line after Class definition."/>
     </module>
     <module name="RegexpMultiline">
@@ -57,21 +57,21 @@
     </module>
 
     <!-- Size Violations checks -->
-    <!-- https://checkstyle.org/config_sizes.html -->
+    <!-- https://checkstyle.sourceforge.io/checks/sizes/ -->
     <module name="LineLength">
         <property name="fileExtensions" value="java"/>
         <property name="max" value="120"/>
     </module>
 
     <!-- Whitespace checks -->
-    <!-- https://checkstyle.org/config_whitespace.html -->
+    <!-- https://checkstyle.sourceforge.io/checks/whitespace/ -->
     <module name="FileTabCharacter"/>
 
     <!-- Individual Java source files checks -->
     <!-- https://checkstyle.sourceforge.io/config.html#TreeWalker -->
     <module name="TreeWalker">
-        <!-- Code Block checks -->
-        <!-- https://checkstyle.org/config_blocks.html -->
+        <!-- Block checks -->
+        <!-- https://checkstyle.sourceforge.io/checks/blocks/ -->
         <module name="AvoidNestedBlocks">
             <property name="allowInSwitchCase" value="true"/>
         </module>
@@ -83,7 +83,7 @@
         <module name="RightCurly"/>
 
         <!-- Class Design checks -->
-        <!-- https://checkstyle.org/config_design.html -->
+        <!-- https://checkstyle.sourceforge.io/checks/design/ -->
         <module name="FinalClass"/>
         <module name="HideUtilityClassConstructor"/>
         <module name="InterfaceIsType"/>
@@ -94,7 +94,7 @@
         </module>
 
         <!-- Coding checks -->
-        <!-- https://checkstyle.org/config_coding.html -->
+        <!-- https://checkstyle.sourceforge.io/checks/coding/ -->
         <module name="AvoidDoubleBraceInitialization"/>
         <module name="CovariantEquals"/>
         <module name="DeclarationOrder"/>
@@ -122,6 +122,11 @@
         <module name="OverloadMethodsDeclarationOrder"/>
         <module name="PackageDeclaration"/>
         <module name="ParameterAssignment"/>
+        <module name="RequireThis">
+            <property name="checkFields" value="true"/>
+            <property name="checkMethods" value="false"/>
+            <property name="validateOnlyOverlapping" value="false"/>
+        </module>
         <module name="SimplifyBooleanExpression"/>
         <module name="SimplifyBooleanReturn"/>
         <module name="StringLiteralEquality"/>
@@ -133,11 +138,12 @@
         <module name="UnusedLocalVariable"/>
 
         <!-- Imports checks -->
-        <!-- https://checkstyle.org/config_imports.html -->
+        <!-- https://checkstyle.sourceforge.io/checks/imports/ -->
         <module name="AvoidStarImport"/>
         <module name="AvoidStaticImport">
             <property name="excludes" value="
                     org.junit.jupiter.api.Assertions.*,
+                    org.junit.jupiter.api.Assumptions.*,
                     org.assertj.core.api.Assertions.*,
             "/>
         </module>
@@ -148,7 +154,7 @@
         </module>
 
         <!-- Javadoc Comments checks -->
-        <!-- https://checkstyle.org/config_javadoc.html -->
+        <!-- https://checkstyle.sourceforge.io/checks/javadoc/ -->
         <module name="AtclauseOrder"/>
         <module name="InvalidJavadocPosition"/>
         <module name="JavadocBlockTagLocation"/>
@@ -164,47 +170,52 @@
         <module name="SingleLineJavadoc"/>
 
         <!-- Miscellaneous checks -->
-        <!-- https://checkstyle.org/config_misc.html -->
+        <!-- https://checkstyle.sourceforge.io/checks/misc/ -->
         <module name="ArrayTypeStyle"/>
         <module name="NoCodeInFile"/>
         <module name="OuterTypeFilename"/>
-        <module name="ParameterAssignment"/>
         <module name="UpperEll"/>
 
         <!-- Modifiers checks -->
-        <!-- https://checkstyle.org/config_modifier.html -->
+        <!-- https://checkstyle.sourceforge.io/checks/modifier/ -->
         <module name="ModifierOrder"/>
         <module name="RedundantModifier"/>
 
         <!-- Naming Conventions checks -->
-        <!-- https://checkstyle.org/config_naming.html -->
+        <!-- https://checkstyle.sourceforge.io/checks/naming/ -->
         <module name="AbbreviationAsWordInName">
             <property name="allowedAbbreviationLength" value="0"/>
             <property name="ignoreFinal" value="false"/>
         </module>
-        <module name="ClassTypeParameterName"/>
+        <module name="ClassTypeParameterName">
+            <property name="format" value="^[A-Z][a-zA-Z0-9]*$"/>
+        </module>
         <module name="ConstantName"/>
-        <module name="InterfaceTypeParameterName"/>
+        <module name="InterfaceTypeParameterName">
+            <property name="format" value="^[A-Z][a-zA-Z0-9]*$"/>
+        </module>
         <module name="LambdaParameterName"/>
         <module name="LocalFinalVariableName"/>
         <module name="LocalVariableName"/>
         <module name="MemberName"/>
         <module name="MethodName"/>
-        <module name="MethodTypeParameterName"/>
+        <module name="MethodTypeParameterName">
+            <property name="format" value="^[A-Z][a-zA-Z0-9]*$"/>
+        </module>
         <module name="PackageName"/>
         <module name="ParameterName"/>
         <module name="StaticVariableName"/>
         <module name="TypeName"/>
 
         <!-- Size Violations checks -->
-        <!-- https://checkstyle.org/config_sizes.html -->
+        <!-- https://checkstyle.sourceforge.io/checks/sizes/ -->
         <module name="ParameterNumber">
             <property name="max" value="5"/>
             <property name="ignoreOverriddenMethods" value="true"/>
         </module>
 
         <!-- Whitespace checks -->
-        <!-- https://checkstyle.org/config_whitespace.html -->
+        <!-- https://checkstyle.sourceforge.io/checks/whitespace/ -->
         <module name="EmptyForIteratorPad"/>
         <module name="EmptyLineSeparator">
             <property name="allowNoEmptyLineBetweenFields" value="true"/>
@@ -227,10 +238,10 @@
         </module>
 
         <!-- Enable ability to suppress Checkstyle rules with comments -->
-        <!-- https://checkstyle.org/config_filters.html#SuppressionCommentFilter -->
+        <!-- https://checkstyle.sourceforge.io/filters/suppressioncommentfilter.html -->
         <module name="SuppressionCommentFilter"/>
         <!-- This module is required by SuppressWarningsFilter specified in Checker -->
-        <!-- https://checkstyle.org/config_filters.html#SuppressWarningsFilter -->
+        <!-- https://checkstyle.sourceforge.io/filters/suppresswarningsfilter.html -->
         <module name="SuppressWarningsHolder"/>
     </module>
 </module>

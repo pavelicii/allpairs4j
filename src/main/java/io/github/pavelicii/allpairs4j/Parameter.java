@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Pavel Nazimok - @pavelicii
+ * Copyright 2023 Pavel Nazimok - @pavelicii
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,10 @@ public class Parameter extends ArrayList<Object> {
     private final String name;
 
     /**
-     * Constructs {@code Parameter} with specified name and {@code List} of possible values.
+     * Constructs {@link Parameter} with specified name and {@link List} of possible values.
      *
-     * @param name {@code Parameter} name
-     * @param values {@code List} of possible {@code Parameter} values
+     * @param name {@link Parameter} name
+     * @param values {@link List} of possible {@link Parameter} values
      */
     public Parameter(String name, List<?> values) {
         super(values);
@@ -41,21 +41,21 @@ public class Parameter extends ArrayList<Object> {
     }
 
     /**
-     * Constructs {@code Parameter} with specified name and possible values.
+     * Constructs {@link Parameter} with specified name and possible values.
      *
-     * @param name {@code Parameter} name
-     * @param values possible {@code Parameter} values
+     * @param name {@link Parameter} name
+     * @param values possible {@link Parameter} values
      */
     public Parameter(String name, Object... values) {
         this(name, Arrays.asList(values));
     }
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     @Override
     public String toString() {
-        return name + ": " + super.toString();
+        return this.name + ": " + super.toString();
     }
 }

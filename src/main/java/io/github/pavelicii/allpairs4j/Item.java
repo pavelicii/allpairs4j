@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Pavel Nazimok - @pavelicii
+ * Copyright 2023 Pavel Nazimok - @pavelicii
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Holds single {@link Parameter} value with its name, unified ID and weights needed for AllPairs algorithm.
- */
+/** Stores single {@link Parameter} value, its name, unified ID and weights needed for AllPairs algorithm. */
 class Item implements Comparable<Item> {
 
     private static final Comparator<List<Integer>> INTEGER_LIST_LEXICOGRAPHICAL_COMPARATOR = (o1, o2) -> {
@@ -56,19 +54,19 @@ class Item implements Comparable<Item> {
     }
 
     String getItemId() {
-        return itemId;
+        return this.itemId;
     }
 
     Object getValue() {
-        return value;
+        return this.value;
     }
 
     String getName() {
-        return name;
+        return this.name;
     }
 
     List<Integer> getWeights() {
-        return weights;
+        return this.weights;
     }
 
     void setWeights(List<Integer> weights) {
