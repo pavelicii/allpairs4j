@@ -110,7 +110,7 @@ class GenerationTest {
     }
 
     @Test
-    @Timeout(value = 10)
+    @Timeout(value = 5)
     void shouldGenerateAllPairwiseCasesForLargeInputWithoutConstraintsAndNotExceedTimeout() {
         final AllPairs allPairs = new AllPairs.AllPairsBuilder()
                 .withParameters(TestData.PARAMETERS_LARGE)
@@ -120,7 +120,7 @@ class GenerationTest {
     }
 
     @Test
-    @Timeout(value = 10)
+    @Timeout(value = 5)
     void shouldGenerateAllPairwiseCasesForLargeInputWithConstraintsAndNotExceedTimeout() {
         final AllPairs allPairs = new AllPairs.AllPairsBuilder()
                 .withParameters(TestData.PARAMETERS_LARGE)
