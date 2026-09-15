@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Pavel Nazimok - @pavelicii
+ * Copyright 2023-2026 Pavel Nazimok - @pavelicii
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,50 +16,33 @@
 
 package io.github.pavelicii.allpairs4j;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
 class Node {
 
-    private final String nodeId;
-    private int counter;
-    private final Set<String> inboundItemIds;
-    private final Set<String> outboundItemIds;
+    private long counter;
+    private int inboundCount;
+    private int outboundCount;
 
-    Node(String nodeId) {
-        this.nodeId = nodeId;
-        this.counter = 0;
-        this.inboundItemIds = new HashSet<>();
-        this.outboundItemIds = new HashSet<>();
+    void increaseCounter(long amount) {
+        this.counter = Math.addExact(this.counter, amount);
     }
 
-    @Override
-    public String toString() {
-        return this.nodeId;
-    }
-
-    void increaseCounter() {
-        this.counter++;
-    }
-
-    int getCounter() {
+    long getCounter() {
         return this.counter;
     }
 
-    int getInboundItemIdsSize() {
-        return this.inboundItemIds.size();
+    int getInboundCount() {
+        return this.inboundCount;
     }
 
-    int getOutboundItemIdsSize() {
-        return this.outboundItemIds.size();
+    int getOutboundCount() {
+        return this.outboundCount;
     }
 
-    void addInboundItemIds(Collection<String> itemIds) {
-        this.inboundItemIds.addAll(itemIds);
+    void increaseInboundCount() {
+        this.inboundCount++;
     }
 
-    void addOutboundItemIds(Collection<String> itemIds) {
-        this.outboundItemIds.addAll(itemIds);
+    void increaseOutboundCount() {
+        this.outboundCount++;
     }
 }

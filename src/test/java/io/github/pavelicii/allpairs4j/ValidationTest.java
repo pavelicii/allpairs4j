@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Pavel Nazimok - @pavelicii
+ * Copyright 2023-2026 Pavel Nazimok - @pavelicii
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,29 +17,28 @@
 package io.github.pavelicii.allpairs4j;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+/**
+ * Checks that the builder rejects missing parameters or names, duplicate names or values,
+ * {@code null} arguments, and combination sizes outside the allowed range.
+ */
 class ValidationTest {
 
-    @Test
-    void shouldThrowWhenTestCombinationSizeIsLessThan2() {
+    @ParameterizedTest
+    @ValueSource(ints = {1, 5})
+    void shouldThrowWhenTestCombinationSizeIsOutOfRange(int size) {
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(
                 () -> new AllPairs.AllPairsBuilder()
                         .withParameters(TestData.PARAMETERS)
-                        .withTestCombinationSize(1)
-                        .build()
-        );
-    }
-
-    @Test
-    void shouldThrowWhenTestCombinationSizeIsGreaterThanNumberOfParameters() {
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(
-                () -> new AllPairs.AllPairsBuilder()
-                        .withParameters(TestData.PARAMETERS)
-                        .withTestCombinationSize(5)
+                        .withTestCombinationSize(size)
                         .build()
         );
     }
@@ -63,34 +62,27 @@ class ValidationTest {
         );
     }
 
-    @Test
-    void shouldThrowWhenParameterNameIsNull() {
+    @ParameterizedTest
+    @NullAndEmptySource
+    void shouldThrowWhenParameterNameIsMissing(String name) {
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(
                 () -> new AllPairs.AllPairsBuilder()
                         .withParameters(TestData.PARAMETERS)
-                        .withParameter(new Parameter(null, "Foo", "Bar"))
+                        .withParameter(new Parameter(name, "Foo", "Bar"))
                         .build()
         );
     }
 
-    @Test
-    void shouldThrowWhenParameterNameIsEmpty() {
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1, 2})
+    void shouldThrowWhenParameterHasDuplicateValues(int index) {
+        final Object value = Arrays.asList(1, null, Parameter.ABSENT).get(index);
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(
                 () -> new AllPairs.AllPairsBuilder()
                         .withParameters(TestData.PARAMETERS)
-                        .withParameter(new Parameter("", "Foo", "Bar"))
+                        .withParameter(new Parameter("Name", value, value))
                         .build()
-        );
-    }
-
-    @Test
-    void shouldThrowWhenParameterHasDuplicateValues() {
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(
-                () -> new AllPairs.AllPairsBuilder()
-                        .withParameters(TestData.PARAMETERS)
-                        .withParameter(new Parameter("Name", 1, 1))
-                        .build()
-        );
+        ).withMessageContaining("no duplicate values");
     }
 
     @Test
@@ -105,40 +97,36 @@ class ValidationTest {
     }
 
     @Test
-    void shouldThrowWhenParameterIsNull() {
-        assertThatExceptionOfType(NullPointerException.class).isThrownBy(
-                () -> new AllPairs.AllPairsBuilder()
-                        .withParameter(null)
-                        .build()
-        ).withStackTraceContaining("requireNonNull");
+    void shouldRejectNullArguments() {
+        final AllPairs.AllPairsBuilder builder = new AllPairs.AllPairsBuilder();
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> builder.withParameter(null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> builder.withParameters(null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> builder.withConstraint(null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> builder.withConstraints(null));
+        assertThatExceptionOfType(NullPointerException.class)
+                .isThrownBy(() -> new Parameter("Drive", TestData.DRIVE).withConstraint(null));
     }
 
-    @Test
-    void shouldThrowWhenParametersAreNull() {
-        assertThatExceptionOfType(NullPointerException.class).isThrownBy(
-                () -> new AllPairs.AllPairsBuilder()
-                        .withParameters(null)
-                        .build()
-        ).withStackTraceContaining("requireNonNull");
-    }
-
-    @Test
-    void shouldThrowWhenConstraintIsNull() {
-        assertThatExceptionOfType(NullPointerException.class).isThrownBy(
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void shouldRejectUnknownNameAfterResolvingKnownParameter(boolean presenceRead) {
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(
                 () -> new AllPairs.AllPairsBuilder()
                         .withParameters(TestData.PARAMETERS)
-                        .withConstraint(null)
-                        .build()
-        ).withStackTraceContaining("requireNonNull");
+                        .withConstraint(c -> c.get("OS").equals("Linux")
+                                && (presenceRead ? c.isPresent("typo") : c.get("typo") == null))
+                        .build()).withMessage("Unknown parameter in case constraint: typo");
     }
 
-    @Test
-    void shouldThrowWhenConstraintsAreNull() {
-        assertThatExceptionOfType(NullPointerException.class).isThrownBy(
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void shouldRejectUnknownNameInParameterConstraint(boolean presenceRead) {
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(
                 () -> new AllPairs.AllPairsBuilder()
-                        .withParameters(TestData.PARAMETERS)
-                        .withConstraints(null)
-                        .build()
-        ).withStackTraceContaining("requireNonNull");
+                        .withParameter(TestData.OS)
+                        .withParameter(new Parameter("Drive", TestData.DRIVE)
+                                .withConstraint(c -> presenceRead ? !c.isPresent("Unknown") : c.get("Unknown") == null))
+                        .build())
+                .withMessageContaining("Unknown parameter in parameter constraint for 'Drive': Unknown");
     }
 }
