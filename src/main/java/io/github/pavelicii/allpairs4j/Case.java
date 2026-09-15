@@ -21,11 +21,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A {@link LinkedHashMap} representing single test case.
- * <ul>
- *     <li>{@code key} is the {@link Parameter} name
- *     <li>{@code value} is one of the {@link Parameter} values selected by AllPairs algorithm
- * </ul>
+ * One test case, stored as a {@link LinkedHashMap} from parameter names to chosen values.
+ * Generated cases leave out absent parameters. A present parameter with a {@code null} value keeps its key.
  */
 public class Case extends LinkedHashMap<String, Object> {
 
@@ -38,10 +35,10 @@ public class Case extends LinkedHashMap<String, Object> {
     }
 
     /**
-     * Creates {@link Case}.
+     * Creates a case from alternating parameter names and values.
      *
-     * @param input varargs. Must be an odd number of arguments. Each odd argument is a key of {@link String} type.
-     *              Each even argument is a value of {@link Object} type.
+     * @param input name-value pairs; names must be strings, and the number of arguments must be even
+     * @throws IllegalArgumentException if the number of arguments is odd
      */
     public Case(Object... input) {
         if ((input.length & 1) != 0) {
@@ -53,7 +50,7 @@ public class Case extends LinkedHashMap<String, Object> {
     }
 
     Case(List<Item> items) {
-        items.forEach(item -> {
+        items.stream().filter(Item::isPresent).forEach(item -> {
             if (super.containsKey(item.getName())) {
                 throw new IllegalStateException("Duplicate key: " + item.getName());
             }

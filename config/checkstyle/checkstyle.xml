@@ -162,12 +162,12 @@
         <module name="JavadocMethod"/>
         <module name="JavadocMissingLeadingAsterisk"/>
         <module name="JavadocMissingWhitespaceAfterAsterisk"/>
-        <module name="JavadocStyle"/>
         <module name="JavadocTagContinuationIndentation"/>
         <module name="JavadocType"/>
         <module name="NonEmptyAtclauseDescription"/>
         <module name="RequireEmptyLineBeforeBlockTagGroup"/>
         <module name="SingleLineJavadoc"/>
+        <module name="SummaryJavadoc"/>
 
         <!-- Miscellaneous checks -->
         <!-- https://checkstyle.sourceforge.io/checks/misc/ -->

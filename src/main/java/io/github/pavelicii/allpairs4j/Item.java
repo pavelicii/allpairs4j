@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Pavel Nazimok - @pavelicii
+ * Copyright 2023-2026 Pavel Nazimok - @pavelicii
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,45 +16,44 @@
 
 package io.github.pavelicii.allpairs4j;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-
-/** Stores single {@link Parameter} value, its name, unified ID and weights needed for AllPairs algorithm. */
+/** Holds one parameter value or absence, its name and indices, and weights used to rank it during generation. */
 class Item implements Comparable<Item> {
 
-    private static final Comparator<List<Integer>> INTEGER_LIST_LEXICOGRAPHICAL_COMPARATOR = (o1, o2) -> {
-        final Iterator<Integer> i1 = o1.iterator();
-        final Iterator<Integer> i2 = o2.iterator();
-        int result;
+    private static final Object INAPPLICABLE = new Object();
 
-        do {
-            if (!i1.hasNext()) {
-                return !i2.hasNext() ? 0 : -1;
-            }
-            if (!i2.hasNext()) {
-                return 1;
-            }
-            result = i1.next().compareTo(i2.next());
-        } while (result == 0);
-
-        return result;
-    };
-
-    private final String itemId;
+    private final int parameterIndex;
+    private final int valueIndex;
+    private final int globalValueIndex;
     private final Object value;
     private final String name;
-    private List<Integer> weights = new ArrayList<>();
+    private long[] weights = new long[0];
 
-    Item(String itemId, Object value, String name) {
-        this.itemId = itemId;
+    Item(int parameterIndex, int valueIndex, int globalValueIndex, Object value, String name) {
+        this.parameterIndex = parameterIndex;
+        this.valueIndex = valueIndex;
+        this.globalValueIndex = globalValueIndex;
         this.value = value;
         this.name = name;
     }
 
-    String getItemId() {
-        return this.itemId;
+    static Item absent(int parameterIndex, int valueIndex, int globalValueIndex, String name) {
+        return new Item(parameterIndex, valueIndex, globalValueIndex, INAPPLICABLE, name);
+    }
+
+    boolean isPresent() {
+        return this.value != INAPPLICABLE;
+    }
+
+    int getParameterIndex() {
+        return this.parameterIndex;
+    }
+
+    int getValueIndex() {
+        return this.valueIndex;
+    }
+
+    int getGlobalValueIndex() {
+        return this.globalValueIndex;
     }
 
     Object getValue() {
@@ -65,16 +64,18 @@ class Item implements Comparable<Item> {
         return this.name;
     }
 
-    List<Integer> getWeights() {
-        return this.weights;
-    }
-
-    void setWeights(List<Integer> weights) {
+    void setWeights(long[] weights) {
         this.weights = weights;
     }
 
     @Override
     public int compareTo(Item otherItem) {
-        return INTEGER_LIST_LEXICOGRAPHICAL_COMPARATOR.compare(getWeights(), otherItem.getWeights());
+        for (int i = 0; i < Math.min(this.weights.length, otherItem.weights.length); i++) {
+            final int comparison = Long.compare(this.weights[i], otherItem.weights[i]);
+            if (comparison != 0) {
+                return comparison;
+            }
+        }
+        return Integer.compare(this.weights.length, otherItem.weights.length);
     }
 }
